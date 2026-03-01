@@ -34,11 +34,11 @@ where
 }
 
 pub fn to_bytes(img: &ImageBuffer<Rgb<u8>, Vec<u8>>) -> Vec<[u8; 32]> {
-    const CHUNK_SIZE: u32 = 32 / 2 * 8; // The amount of pixels to be transmitted at a time (32 Bytes with 2 bit per Pixel)
+    const CHUNK_SIZE: usize = 32 / 2 * 8; // The amount of pixels to be transmitted at a time (32 Bytes with 2 bit per Pixel)
 
     let result: Vec<[u8; 32]> = img
         .pixels()
-        .chunks(128)
+        .chunks(CHUNK_SIZE)
         .into_iter()
         .map(|pixels| {
             let mut chunk = [0u8; 32];
