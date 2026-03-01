@@ -8,3 +8,4 @@ keywords = ["hub", "dashboard", "bluetooth le"]
 
 [dependencies]
 btleplug = "0.11.8"
+image = "0.25.9"
