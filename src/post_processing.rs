@@ -4,6 +4,7 @@ use image::{
     ImageBuffer, ImageReader, Rgb,
     imageops::{ColorMap, FilterType, dither, resize},
 };
+use itertools::Itertools;
 
 pub fn load_and_dither<P>(path: P) -> ImageBuffer<Rgb<u8>, Vec<u8>>
 where
@@ -30,6 +31,40 @@ where
     dither(&mut img, &RedWhiteBlack);
 
     img
+}
+
+fn to_bytes(img: &ImageBuffer<Rgb<u8>, Vec<u8>>) -> Vec<[u8; 32]> {
+    const CHUNK_SIZE: u32 = 32 / 2 * 8; // The amount of pixels to be transmitted at a time (32 Bytes with 2 bit per Pixel)
+
+    let result: Vec<[u8; 32]> = img
+        .pixels()
+        .chunks(128)
+        .into_iter()
+        .map(|pixels| {
+            let mut chunk = [0u8; 32];
+
+            for (group_index, group) in pixels.chunks(8).into_iter().enumerate() {
+                let mut black_pixel = 255u8;
+                let mut red_pixel = 255u8;
+                for (pixel_index, pixel) in group.enumerate() {
+                    match pixel.0 {
+                        [255, 0, 0] => {
+                            red_pixel = red_pixel | (0 << pixel_index);
+                        }
+                        [0, 0, 0] => {
+                            black_pixel = black_pixel | (0 << pixel_index);
+                        }
+                        _ => (),
+                    }
+                }
+                chunk[group_index * 2] = black_pixel;
+                chunk[group_index * 2 + 1] = red_pixel;
+            }
+            chunk
+        })
+        .collect();
+
+    result
 }
 
 #[derive(Clone, Copy)]
