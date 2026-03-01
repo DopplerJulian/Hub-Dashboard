@@ -20,7 +20,7 @@ where
     let target_height: u32 = 480;
 
     if img.height() != target_height || img.width() != target_width {
-        resize(
+        img = resize(
             &mut img,
             target_width,
             target_height,
@@ -33,7 +33,7 @@ where
     img
 }
 
-fn to_bytes(img: &ImageBuffer<Rgb<u8>, Vec<u8>>) -> Vec<[u8; 32]> {
+pub fn to_bytes(img: &ImageBuffer<Rgb<u8>, Vec<u8>>) -> Vec<[u8; 32]> {
     const CHUNK_SIZE: u32 = 32 / 2 * 8; // The amount of pixels to be transmitted at a time (32 Bytes with 2 bit per Pixel)
 
     let result: Vec<[u8; 32]> = img
@@ -49,10 +49,10 @@ fn to_bytes(img: &ImageBuffer<Rgb<u8>, Vec<u8>>) -> Vec<[u8; 32]> {
                 for (pixel_index, pixel) in group.enumerate() {
                     match pixel.0 {
                         [255, 0, 0] => {
-                            red_pixel = red_pixel | (0 << pixel_index);
+                            red_pixel = red_pixel & !(1 << pixel_index);
                         }
                         [0, 0, 0] => {
-                            black_pixel = black_pixel | (0 << pixel_index);
+                            black_pixel = black_pixel & !(1 << pixel_index);
                         }
                         _ => (),
                     }
