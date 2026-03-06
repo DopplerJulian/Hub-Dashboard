@@ -2,7 +2,7 @@ use btleplug::api::{Central, Manager as _, Peripheral as _, ScanFilter, WriteTyp
 use btleplug::platform::{Adapter, Manager, Peripheral};
 use tokio::time;
 
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
 
 const DASHBOARD_BUFFER_CHARACTERISTIC_UUID: u128 = 0x0001000150bf48a29d8a835aaa2fb179;
 const DASHBOARD_WRITE_CHARACTERISTIC_UUID: u128 = 0x0001000250bf48a29d8a835aaa2fb179;
@@ -70,10 +70,14 @@ async fn transmit_to_peripheral(per: &Peripheral, data: &[[u8; 32]]) {
     let len = data.len();
     println!("Data chunk amount: {len}");
     let hundreth = len / 100;
+    let now = SystemTime::now();
     for (i, packet) in data.iter().enumerate() {
-        per.write(buffer_char, packet, WriteType::WithResponse)
-            .await
-            .unwrap();
+        let write_type = if (i % 50) == 0 {
+            WriteType::WithResponse
+        } else {
+            WriteType::WithoutResponse
+        };
+        per.write(buffer_char, packet, write_type).await.unwrap();
 
         if i % hundreth == 0 {
             println!("At {}%", i / hundreth);
@@ -82,12 +86,15 @@ async fn transmit_to_peripheral(per: &Peripheral, data: &[[u8; 32]]) {
             // }
         }
     }
-
+    let duration = now.elapsed().unwrap();
     println!("Completed transmission of data");
+    println!("Time taken: {}ms", duration.as_millis().to_string());
 
     per.write(write_char, &[1u8], WriteType::WithResponse)
         .await
         .unwrap();
+
+    per.disconnect().await.unwrap();
 
     println!("Written to Display");
 }

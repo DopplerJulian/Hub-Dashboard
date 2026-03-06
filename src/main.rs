@@ -13,6 +13,7 @@ async fn main() {
     println!("Program, Start!");
     let next: PathBuf = [".", "history", "latest.png"].iter().collect();
     let path = PathBuf::from_str(r".\history\screenshot.png").unwrap();
+    // let path = PathBuf::from_str(r".\history\car.jpg").unwrap();
 
     let img = load_and_dither(&path);
 
